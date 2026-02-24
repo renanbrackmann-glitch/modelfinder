@@ -137,20 +137,26 @@ function analyzeLegalText(text: string): { tags: string[]; query: string } {
   };
 }
 
+// Força uma senha fixa para teste e elimina erro de busca no banco vazio
 async function getAdminPassword(): Promise<string> {
-  const saved = await storage.getSetting("adminPassword");
-  return saved ?? process.env.ADMIN_PASSWORD ?? "admin123";
+  return "admin123"; 
 }
 
 async function checkAdminAuth(req: Request, res: Response): Promise<boolean> {
-  console.log("Tentativa de login recebida. Senha fornecida:", req.headers["x-admin-password"] ? "via Header" : "via Body");
+  // Log para vermos na aba de Logs da Vercel
+  console.log("Tentativa de login iniciada");
 
-  const provided = req.headers["x-admin-password"]; || req.body.password;
+  // Aceita a senha tanto do Header (x-admin-password) quanto do Body (password)
+  const provided = req.headers["x-admin-password"] || req.body.password;
   const expected = await getAdminPassword();
-  if (provided !== expected) {
+  
+  if (!provided || provided !== expected) {
+    console.log("Senha rejeitada. Recebido:", provided ? "Valor incorreto" : "Vazio");
     res.status(401).json({ message: "Senha de administrador incorreta" });
     return false;
   }
+  
+  console.log("Senha aceita com sucesso!");
   return true;
 }
 
