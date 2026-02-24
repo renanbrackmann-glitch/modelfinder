@@ -143,7 +143,9 @@ async function getAdminPassword(): Promise<string> {
 }
 
 async function checkAdminAuth(req: Request, res: Response): Promise<boolean> {
-  const provided = req.headers["x-admin-password"];
+  console.log("Tentativa de login recebida. Senha fornecida:", req.headers["x-admin-password"] ? "via Header" : "via Body");
+
+  const provided = req.headers["x-admin-password"]; || req.body.password;
   const expected = await getAdminPassword();
   if (provided !== expected) {
     res.status(401).json({ message: "Senha de administrador incorreta" });
