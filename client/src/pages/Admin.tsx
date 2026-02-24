@@ -203,12 +203,20 @@ export default function Admin() {
     if (!password.trim()) return;
     setAuthLoading(true);
     setAuthError(false);
+    // #region agent log
+    fetch('http://127.0.0.1:7810/ingest/6405b006-79bb-45d6-8a78-271d96e3bb85',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'8c138b'},body:JSON.stringify({sessionId:'8c138b',location:'Admin.tsx:202',message:'login attempt started',data:{passwordLength:password.length},timestamp:Date.now(),hypothesisId:'H1,H5'})}).catch(()=>{});
+    // #endregion
     try {
       const res = await fetch("/api/admin/verify-password", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ password }),
       });
+      // #region agent log
+      const rawBody = await res.text();
+      console.log('[DEBUG-LOGIN] status:', res.status, 'ok:', res.ok, 'body:', rawBody);
+      fetch('http://127.0.0.1:7810/ingest/6405b006-79bb-45d6-8a78-271d96e3bb85',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'8c138b'},body:JSON.stringify({sessionId:'8c138b',location:'Admin.tsx:213',message:'api response received',data:{status:res.status,ok:res.ok,body:rawBody.slice(0,500),contentType:res.headers.get('content-type')},timestamp:Date.now(),hypothesisId:'H1,H2,H3'})}).catch(()=>{});
+      // #endregion
       if (res.ok) {
         sessionStorage.setItem(SESSION_KEY, password);
         setIsAuthenticated(true);
@@ -216,7 +224,11 @@ export default function Admin() {
       } else {
         setAuthError(true);
       }
-    } catch {
+    } catch(err: any) {
+      // #region agent log
+      console.log('[DEBUG-LOGIN] fetch error:', err?.name, err?.message, String(err));
+      fetch('http://127.0.0.1:7810/ingest/6405b006-79bb-45d6-8a78-271d96e3bb85',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'8c138b'},body:JSON.stringify({sessionId:'8c138b',location:'Admin.tsx:223',message:'login fetch threw error',data:{error:String(err),name:err?.name,msg:err?.message},timestamp:Date.now(),hypothesisId:'H5'})}).catch(()=>{});
+      // #endregion
       setAuthError(true);
     } finally {
       setAuthLoading(false);

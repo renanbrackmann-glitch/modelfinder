@@ -552,6 +552,10 @@ Seja exaustivo mas preciso. Não invente modelos — use apenas IDs que existem 
   app.post("/api/admin/verify-password", async (req: Request, res: Response) => {
     const { password } = req.body as { password: string };
     const expected = await getAdminPassword();
+    // #region agent log
+    console.log('[DEBUG-AUTH] body keys:', Object.keys(req.body || {}), 'password provided:', !!password, 'content-type:', req.headers['content-type']);
+    fetch('http://127.0.0.1:7810/ingest/6405b006-79bb-45d6-8a78-271d96e3bb85',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'8c138b'},body:JSON.stringify({sessionId:'8c138b',location:'routes.ts:552',message:'verify-password called',data:{bodyKeys:Object.keys(req.body||{}),hasPassword:!!password,passwordLength:password?.length,match:password===expected,contentType:req.headers['content-type']},timestamp:Date.now(),hypothesisId:'H2,H3,H4'})}).catch(()=>{});
+    // #endregion
     if (password === expected) {
       res.json({ ok: true });
     } else {
