@@ -137,26 +137,18 @@ function analyzeLegalText(text: string): { tags: string[]; query: string } {
   };
 }
 
-// Força uma senha fixa para teste e elimina erro de busca no banco vazio
 async function getAdminPassword(): Promise<string> {
-  return "admin123"; 
+  const saved = await storage.getSetting("adminPassword");
+  return saved ?? process.env.ADMIN_PASSWORD ?? "admin123";
 }
 
 async function checkAdminAuth(req: Request, res: Response): Promise<boolean> {
-  // Log para vermos na aba de Logs da Vercel
-  console.log("Tentativa de login iniciada");
-
-  // Aceita a senha tanto do Header (x-admin-password) quanto do Body (password)
-  const provided = req.headers["x-admin-password"] || req.body.password;
+  const provided = req.headers["x-admin-password"];
   const expected = await getAdminPassword();
-  
-  if (!provided || provided !== expected) {
-    console.log("Senha rejeitada. Recebido:", provided ? "Valor incorreto" : "Vazio");
+  if (provided !== expected) {
     res.status(401).json({ message: "Senha de administrador incorreta" });
     return false;
   }
-  
-  console.log("Senha aceita com sucesso!");
   return true;
 }
 
@@ -552,10 +544,6 @@ Seja exaustivo mas preciso. Não invente modelos — use apenas IDs que existem 
   app.post("/api/admin/verify-password", async (req: Request, res: Response) => {
     const { password } = req.body as { password: string };
     const expected = await getAdminPassword();
-    // #region agent log
-    console.log('[DEBUG-AUTH] body keys:', Object.keys(req.body || {}), 'password provided:', !!password, 'content-type:', req.headers['content-type']);
-    fetch('http://127.0.0.1:7810/ingest/6405b006-79bb-45d6-8a78-271d96e3bb85',{method:'POST',headers:{'Content-Type':'application/json','X-Debug-Session-Id':'8c138b'},body:JSON.stringify({sessionId:'8c138b',location:'routes.ts:552',message:'verify-password called',data:{bodyKeys:Object.keys(req.body||{}),hasPassword:!!password,passwordLength:password?.length,match:password===expected,contentType:req.headers['content-type']},timestamp:Date.now(),hypothesisId:'H2,H3,H4'})}).catch(()=>{});
-    // #endregion
     if (password === expected) {
       res.json({ ok: true });
     } else {

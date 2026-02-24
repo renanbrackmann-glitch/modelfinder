@@ -46,29 +46,21 @@ async function buildAll() {
   ];
   const externals = allDeps.filter((dep) => !allowlist.includes(dep));
 
-  const sharedConfig = {
-    platform: "node" as const,
+  await esbuild({
+    entryPoints: ["server/index.ts"],
+    platform: "node",
     bundle: true,
-    format: "esm" as const,
+    format: "esm",
+    outfile: "dist/index.mjs",
+    banner: {
+      js: `import { createRequire as _cr } from 'module'; import { fileURLToPath as _fup } from 'url'; import { dirname as _dn } from 'path'; const require = _cr(import.meta.url); const __filename = _fup(import.meta.url); const __dirname = _dn(__filename);`,
+    },
     define: {
       "process.env.NODE_ENV": '"production"',
     },
     minify: true,
     external: externals,
-    logLevel: "info" as const,
-  };
-
-  await esbuild({
-    ...sharedConfig,
-    entryPoints: ["server/index.ts"],
-    outfile: "dist/index.js",
-  });
-
-  console.log("building vercel handler...");
-  await esbuild({
-    ...sharedConfig,
-    entryPoints: ["server/vercel.ts"],
-    outfile: "api/index.js",
+    logLevel: "info",
   });
 }
 
